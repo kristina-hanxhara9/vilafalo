@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistemi i Rezervimit të Hotelit</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --dopio-color: #e74c3c;
+            --triple-color: #2ecc71;
+            --suite-color: #9b59b6;
+            --available-color: #d4f1dd;
+            --booked-color: #ffccd5;
+            --pending-color: #fff9c4;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --error-color: #c0392b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        h1 {
+            font-size: 24px;
+        }
+
+        h3, h4 {
+            margin: 10px 0;
+            color: var(--secondary-color);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .date-navigation {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        button.secondary {
+            background-color: #95a5a6;
+        }
+
+        button.secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        button.success {
+            background-color: var(--success-color);
+        }
+
+        button.success:hover {
+            background-color: #219652;
+        }
+
+        button.warning {
+            background-color: var(--warning-color);
+        }
+
+        button.warning:hover {
+            background-color: #e67e22;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .calendar {
+            overflow-x: auto;
+            margin-bottom: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: var(--secondary-color);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .room-type {
+            text-align: left;
+            font-weight: bold;
+            width: 180px;
+            position: sticky;
+            left: 0;
+            background-color: white;
+            z-index: 5;
+        }
+
+        .dopio {
+            border-left: 5px solid var(--dopio-color);
+        }
+
+        .triple {
+            border-left: 5px solid var(--triple-color);
+        }
+
+        .suite {
+            border-left: 5px solid var(--suite-color);
+        }
+
+        .cell {
+            cursor: pointer;
+            height: 60px;
+            transition: background-color 0.2s;
+        }
+
+        .available {
+            background-color: var(--available-color);
+        }
+
+        .booked {
+            background-color: var(--booked-color);
+        }
+
+        .pending {
+            background-color: var(--pending-color);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        input[type="checkbox"] + label {
+            display: inline;
+            font-weight: normal;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .form-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .color-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .database-controls {
+            margin-top: 20px;
+            background-color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-input {
+            margin: 10px 0 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .export-options {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .db-status {
+            background-color: #e8f4fd;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .db-status-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        #booking-count, #db-status {
+            font-weight: bold;
+        }
+
+        #last-saved-time {
+            font-size: 14px;
+            color: #555;
+            margin-top: 5px;
+        }
+
+        .save-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--success-color);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .date-navigation, .action-buttons {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .room-type {
+                width: 120px;
+            }
+
+            .file-input, .export-options {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .file-input input, .file-input button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sistemi i Rezervimit të Hotelit</h1>
+        </header>
+
+        <div class="controls">
+            <div class="date-navigation">
+                <button id="prev-month">◀ Muaji Paraprak</button>
+                <h2 id="current-month">Prill 2025</h2>
+                <button id="next-month">Muaji Tjetër ▶</button>
+            </div>
+            <div class="action-buttons">
+                <button id="add-booking">Shto Rezervim</button>
+                <button id="refresh-calendar" class="secondary">Rifresko</button>
+            </div>
+        </div>
+
+        <div class="color-legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: var(--dopio-color);"></div>
+                <span>Dhomë Dopio</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: var(--triple-color);"></div>
+                <span>Dhomë Tre Persona</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: var(--suite-color);"></div>
+                <span>Suite</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: var(--available-color);"></div>
+                <span>E Disponueshme</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: var(--booked-color);"></div>
+                <span>E Rezervuar</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: var(--pending-color);"></div>
+                <span>Në Pritje</span>
+            </div>
+        </div>
+
+        <div class="calendar">
+            <table id="booking-table">
+                <thead>
+                    <tr id="header-row">
+                        <th>Lloji i Dhomës</th>
+                        <!-- Datet do të shtohen nga JavaScript -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dhomat dhe rezervimet do të shtohen nga JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="database-controls">
+            <h3>Menaxhimi i të Dhënave</h3>
+            
+            <div class="db-status">
+                <div class="db-status-header">Statusi i Bazës së të Dhënave:</div>
+                <p>Numri total i rezervimeve: <span id="booking-count">0</span></p>
+                <p>Statusi: <span id="db-status">Gati</span></p>
+                <p id="last-saved-time">Asnjë ruajtje e mëparshme</p>
+            </div>
+            
+            <div class="export-options">
+                <button id="export-db" class="success">Eksporto Bazën e të Dhënave</button>
+                <button id="export-excel" class="success">Eksporto në Excel</button>
+            </div>
+            
+            <div class="file-input">
+                <input type="file" id="import-file" accept=".db, .sqlite, .xlsx, .xls, .csv">
+                <button id="import-button">Importo të Dhënat</button>
+            </div>
+            
+            <p>Sistemi përdor një bazë të dhënash SQLite që funksionon direkt në browser pa nevojë për server. Të gjitha ndryshimet ruhen automatikisht. Për siguri shtesë, bëni eksport të rregullt të bazës së të dhënave.</p>
+        </div>
+    </div>
+
+    <div id="booking-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Shto Rezervim të Ri</h2>
+            <form id="booking-form">
+                <div class="form-group">
+                    <label for="room-type">Lloji i Dhomës:</label>
+                    <select id="room-type" required>
+                        <option value="">Zgjidhni llojin e dhomës</option>
+                        <option value="dopio">Dhomë Dopio</option>
+                        <option value="triple">Dhomë Tre Persona</option>
+                        <option value="suite">Suite</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="room-number">Numri i Dhomës:</label>
+                    <select id="room-number" required>
+                        <option value="">Zgjidhni numrin e dhomës</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="client-name">Emri i Klientit:</label>
+                    <input type="text" id="client-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="check-in">Data e Check-in:</label>
+                    <input type="date" id="check-in" required>
+                </div>
+                <div class="form-group">
+                    <label for="check-out">Data e Check-out:</label>
+                    <input type="date" id="check-out" required>
+                </div>
+                <div class="form-group">
+                    <label for="status">Statusi:</label>
+                    <select id="status" required>
+                        <option value="booked">E Rezervuar</option>
+                        <option value="pending">Në Pritje</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="comments">Komente:</label>
+                    <input type="text" id="comments">
+                </div>
+                <div class="form-buttons">
+                    <button type="button" id="cancel-booking">Anulo</button>
+                    <button type="submit" id="save-booking">Ruaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="booking-details-modal" class="modal">
+        <div class="modal-content">
+            <h2>Detaje të Rezervimit</h2>
+            <div id="booking-details-content"></div>
+            <div class="form-buttons">
+                <button type="button" id="close-details">Mbyll</button>
+                <button type="button" id="edit-booking">Ndrysho</button>
+                <button type="button" id="delete-booking">Fshij</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="save-notification" id="save-notification">Rezervimi u ruajt me sukses!</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <script>
+        // Të dhënat e dhomave
+        const roomData = {
+            'dopio': Array.from({length: 5}, (_, i) => `D${i+1}`),
+            'triple': Array.from({length: 5}, (_, i) => `T${i+1}`),
+            'suite': Array.from({length: 3}, (_, i) => `S${i+1}`)
+        };
+
+        // Variablat e përgjithshme
+        let db = null;
+        let bookings = [];
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+        let currentBooking = null;
+
+        // Elementet e DOM
+        const bookingTable = document.getElementById('booking-table');
+        const headerRow = document.getElementById('header-row');
+        const currentMonthElement = document.getElementById('current-month');
+        const prevMonthButton = document.getElementById('prev-month');
+        const nextMonthButton = document.getElementById('next-month');
+        const addBookingButton = document.getElementById('add-booking');
+        const refreshCalendarButton = document.getElementById('refresh-calendar');
+        const exportDbButton = document.getElementById('export-db');
+        const exportExcelButton = document.getElementById('export-excel');
+        const importButton = document.getElementById('import-button');
+        const importFile = document.getElementById('import-file');
+        const bookingCountElement = document.getElementById('booking-count');
+        const dbStatusElement = document.getElementById('db-status');
+        const lastSavedTimeElement = document.getElementById('last-saved-time');
+        const saveNotification = document.getElementById('save-notification');
+
+        // Elementet e Modal
+        const bookingModal = document.getElementById('booking-modal');
+        const bookingForm = document.getElementById('booking-form');
+        const modalTitle = document.getElementById('modal-title');
+        const roomTypeSelect = document.getElementById('room-type');
+        const roomNumberSelect = document.getElementById('room-number');
+        const clientNameInput = document.getElementById('client-name');
+        const checkInInput = document.getElementById('check-in');
+        const checkOutInput = document.getElementById('check-out');
+        const statusSelect = document.getElementById('status');
+        const commentsInput = document.getElementById('comments');
+        const cancelBookingButton = document.getElementById('cancel-booking');
+        const saveBookingButton = document.getElementById('save-booking');
+
+        // Elementet e Modal të Detajeve
+        const bookingDetailsModal = document.getElementById('booking-details-modal');
+        const bookingDetailsContent = document.getElementById('booking-details-content');
+        const closeDetailsButton = document.getElementById('close-details');
+        const editBookingButton = document.getElementById('edit-booking');
+        const deleteBookingButton = document.getElementById('delete-booking');
+
+        // Funksion për të inicializuar bazën e të dhënave SQLite
+        async function initializeDatabase() {
+            try {
+                updateDbStatus("Duke inicializuar bazën e të dhënave...");
+                
+                // Inicializo SQL.js
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+                });
+                
+                // Kontrollo nëse ekziston një bazë e të dhënave në localStorage
+                const savedDbData = localStorage.getItem('hotelBookingDb');
+                
+                if (savedDbData) {
+                    // Ngarko bazën e të dhënave nga localStorage
+                    const dbData = new Uint8Array(JSON.parse(savedDbData));
+                    db = new SQL.Database(dbData);
+                    updateDbStatus("Baza e të dhënave u ngarkua me sukses");
+                } else {
+                    // Krijo një bazë të dhënash të re
+                    db = new SQL.Database();
+                    
+                    // Krijo tabelën e rezervimeve
+                    db.run(`
+                        CREATE TABLE IF NOT EXISTS bookings (
+                            id TEXT PRIMARY KEY,
+                            roomType TEXT NOT NULL,
+                            roomNumber TEXT NOT NULL,
+                            clientName TEXT NOT NULL,
+                            checkIn TEXT NOT NULL,
+                            checkOut TEXT NOT NULL,
+                            status TEXT NOT NULL,
+                            comments TEXT,
+                            createdAt TEXT NOT NULL,
+                            updatedAt TEXT NOT NULL
+                        )
+                    `);
+                    
+                    updateDbStatus("U krijua një bazë e re e të dhënave");
+                }
+                
+                // Lexo të gjitha rezervimet nga baza e të dhënave
+                loadBookingsFromDatabase();
+                
+            } catch (error) {
+                console.error('Gabim gjatë inicializimit të bazës së të dhënave:', error);
+                updateDbStatus("Gabim gjatë inicializimit të bazës së të dhënave", true);
+                
+                // Si plan rezervë, përdor localStorage
+                alert('Ka ndodhur një gabim me bazën e të dhënave. Duke përdorur localStorage si plan rezervë.');
+                loadBackupData();
+            }
+        }
+
+        // Funksion për të ruajtur bazën e të dhënave në localStorage
+        function saveDatabase() {
+            if (!db) return;
+            
+            try {
+                const data = db.export();
+                const arrayBuffer = new Uint8Array(data);
+                localStorage.setItem('hotelBookingDb', JSON.stringify(Array.from(arrayBuffer)));
+                localStorage.setItem('lastSavedTime', new Date().toISOString());
+                
+                updateLastSavedTime();
+                return true;
+            } catch (error) {
+                console.error('Gabim gjatë ruajtjes së bazës së të dhënave:', error);
+                return false;
+            }
+        }
+
+        // Funksion për të ngarkuar rezervimet nga baza e të dhënave
+        function loadBookingsFromDatabase() {
+            if (!db) return;
+            
+            try {
+                const result = db.exec("SELECT * FROM bookings");
+                
+                if (result.length > 0 && result[0].values.length > 0) {
+                    bookings = result[0].values.map(row => {
+                        const columns = result[0].columns;
+                        const booking = {};
+                        
+                        columns.forEach((column, index) => {
+                            booking[column] = row[index];
+                        });
+                        
+                        return booking;
+                    });
+                    
+                    updateBookingCount(bookings.length);
+                    updateDbStatus("Të dhënat u ngarkuan me sukses");
+                } else {
+                    bookings = [];
+                    updateBookingCount(0);
+                    updateDbStatus("Nuk u gjetën rezervime");
+                }
+                
+                applyBookingsToCalendar();
+                updateLastSavedTime();
+            } catch (error) {
+                console.error('Gabim gjatë ngarkimit të rezervimeve:', error);
+                updateDbStatus("Gabim gjatë ngarkimit të rezervimeve", true);
+            }
+        }
+
+        // Funksion për të ngarkuar të dhënat nga localStorage (si plan rezervë)
+        function loadBackupData() {
+            const savedBookings = localStorage.getItem('hotelBookings');
+            if (savedBookings) {
+                bookings = JSON.parse(savedBookings);
+                updateBookingCount(bookings.length);
+                applyBookingsToCalendar();
+            }
+        }
+
+        // Funksion për të përditësuar numrin e rezervimeve
+        function updateBookingCount(count) {
+            bookingCountElement.textContent = count;
+        }
+
+        // Funksion për të përditësuar statusin e bazës së të dhënave
+        function updateDbStatus(message, isError = false) {
+            dbStatusElement.textContent = message;
+            dbStatusElement.style.color = isError ? 'var(--error-color)' : 'var(--success-color)';
+        }
+
+        // Funksion për të përditësuar kohën e fundit të ruajtjes
+        function updateLastSavedTime() {
+            const lastSavedTimeStr = localStorage.getItem('lastSavedTime');
+            if (lastSavedTimeStr) {
+                lastSavedTimeElement.textContent = `Ruajtur më: ${new Date(lastSavedTimeStr).toLocaleString('sq-AL')}`;
+            }
+        }
+
+        // Funksion për të shfaqur njoftimin e ruajtjes
+        function showSaveNotification(message) {
+            saveNotification.textContent = message || 'Rezervimi u ruajt me sukses!';
+            saveNotification.style.display = 'block';
+            
+            setTimeout(() => {
+                saveNotification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Funksion për të shtuar/përditësuar një rezervim në bazën e të dhënave
+        function saveBookingToDatabase(booking) {
+            if (!db) return false;
+            
+            try {
+                const now = new Date().toISOString();
+                
+                // Kontrollo nëse rezervimi ekziston tashmë
+                const exists = db.exec(`SELECT id FROM bookings WHERE id = '${booking.id}'`);
+                
+                if (exists.length > 0 && exists[0].values.length > 0) {
+                    // Përditëso rezervimin ekzistues
+                    db.run(`
+                        UPDATE bookings SET
+                            roomType = ?,
+                            roomNumber = ?,
+                            clientName = ?,
+                            checkIn = ?,
+                            checkOut = ?,
+                            status = ?,
+                            comments = ?,
+                            updatedAt = ?
+                        WHERE id = ?
+                    `, [
+                        booking.roomType,
+                        booking.roomNumber,
+                        booking.clientName,
+                        booking.checkIn,
+                        booking.checkOut,
+                        booking.status,
+                        booking.comments || '',
+                        now,
+                        booking.id
+                    ]);
+                } else {
+                    // Shto një rezervim të ri
+                    db.run(`
+                        INSERT INTO bookings (
+                            id, roomType, roomNumber, clientName, 
+                            checkIn, checkOut, status, comments,
+                            createdAt, updatedAt
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `, [
+                        booking.id,
+                        booking.roomType,
+                        booking.roomNumber,
+                        booking.clientName,
+                        booking.checkIn,
+                        booking.checkOut,
+                        booking.status,
+                        booking.comments || '',
+                        now,
+                        now
+                    ]);
+                }
+                
+                // Ruaj bazën e të dhënave në localStorage
+                saveDatabase();
+                return true;
+            } catch (error) {
+                console.error('Gabim gjatë ruajtjes së rezervimit:', error);
+                return false;
+            }
+        }
+
+        // Funksion për të fshirë një rezervim nga baza e të dhënave
+        function deleteBookingFromDatabase(bookingId) {
+            if (!db) return false;
+            
+            try {
+                db.run(`DELETE FROM bookings WHERE id = ?`, [bookingId]);
+                saveDatabase();
+                return true;
+            } catch (error) {
+                console.error('Gabim gjatë fshirjes së rezervimit:', error);
+                return false;
+            }
+        }
+
+        // Funksion për të eksportuar bazën e të dhënave
+        function exportDatabase() {
+            if (!db) {
+                alert('Nuk u gjet asnjë bazë e të dhënave për të eksportuar.');
+                return;
+            }
+            
+            try {
+                const data = db.export();
+                const blob = new Blob([data], { type: 'application/x-sqlite3' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                
+                a.href = url;
+                a.download = `Rezervimet_Hotel_${formatDate(new Date())}.db`;
+                document.body.appendChild(a);
+                a.click();
+                
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 0);
+                
+                showSaveNotification('Baza e të dhënave u eksportua me sukses!');
+            } catch (error) {
+                console.error('Gabim gjatë eksportimit të bazës së të dhënave:', error);
+                alert('Ndodhi një gabim gjatë eksportimit të bazës së të dhënave.');
+            }
+        }
+
+        // Funksion për të importuar bazën e të dhënave
+        async function importDatabase(file) {
+            try {
+                updateDbStatus("Duke importuar bazën e të dhënave...");
+                
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+                });
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        
+                        // Provo të hapësh bazën e të dhënave
+                        try {
+                            db = new SQL.Database(data);
+                            
+                            // Kontrollo nëse ka tabelën e duhur
+                            const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='bookings'");
+                            
+                            if (tables.length === 0 || tables[0].values.length === 0) {
+                                throw new Error('Baza e të dhënave nuk përmban tabelën e rezervimeve.');
+                            }
+                            
+                            // Ngarko rezervimet
+                            loadBookingsFromDatabase();
+                            
+                            // Ruaj bazën e re në localStorage
+                            saveDatabase();
+                            
+                            showSaveNotification('Baza e të dhënave u importua me sukses!');
+                            updateDbStatus("Baza e të dhënave u importua me sukses");
+                        } catch (dbError) {
+                            console.error('Gabim në bazën e të dhënave:', dbError);
+                            alert('File-i i zgjedhur nuk është një bazë e të dhënave e vlefshme SQLite.');
+                            updateDbStatus("Gabim gjatë importimit të bazës së të dhënave", true);
+                        }
+                    } catch (error) {
+                        console.error('Gabim gjatë përpunimit të file-it:', error);
+                        alert('Ndodhi një gabim gjatë përpunimit të file-it.');
+                        updateDbStatus("Gabim gjatë përpunimit të file-it", true);
+                    }
+                };
+                
+                reader.readAsArrayBuffer(file);
+            } catch (error) {
+                console.error('Gabim gjatë importimit:', error);
+                alert('Ndodhi një gabim gjatë importimit të file-it.');
+                updateDbStatus("Gabim gjatë importimit", true);
+            }
+        }
+
+        // Funksion për të eksportuar rezervimet në Excel
+        function exportToExcel() {
+            if (bookings.length === 0) {
+                alert('Nuk ka rezervime për të eksportuar.');
+                return;
+            }
+            
+            try {
+                const wb = XLSX.utils.book_new();
+                
+                // Krijo një fletë pune për rezervimet
+                const bookingsData = bookings.map(booking => ({
+                    'ID': booking.id,
+                    'Lloji i Dhomës': translateRoomType(booking.roomType),
+                    'Numri i Dhomës': booking.roomNumber,
+                    'Emri i Klientit': booking.clientName,
+                    'Check-in': booking.checkIn,
+                    'Check-out': booking.checkOut,
+                    'Statusi': translateStatus(booking.status),
+                    'Komente': booking.comments || '',
+                    'Krijuar më': booking.createdAt ? new Date(booking.createdAt).toLocaleString('sq-AL') : '',
+                    'Përditësuar më': booking.updatedAt ? new Date(booking.updatedAt).toLocaleString('sq-AL') : ''
+                }));
+                
+                const ws = XLSX.utils.json_to_sheet(bookingsData);
+                XLSX.utils.book_append_sheet(wb, ws, "Rezervimet");
+                
+                // Ruaj file-in Excel
+                XLSX.writeFile(wb, `Rezervimet_Hotel_${formatDate(new Date())}.xlsx`);
+                
+                showSaveNotification('Rezervimet u eksportuan me sukses në Excel!');
+            } catch (error) {
+                console.error('Gabim gjatë eksportimit në Excel:', error);
+                alert('Ndodhi një gabim gjatë eksportimit në Excel.');
+            }
+        }
+
+        // Funksion për të importuar rezervimet nga Excel
+        function importFromExcel(file) {
+            try {
+                updateDbStatus("Duke importuar të dhënat nga Excel...");
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        // Merr të dhënat nga fleta e parë
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                        
+                        if (jsonData.length > 0) {
+                            // Transformo të dhënat në formatin e duhur
+                            const importedBookings = jsonData.map(row => {
+                                const roomType = reverseTranslateRoomType(row['Lloji i Dhomës']);
+                                const now = new Date().toISOString();
+                                
+                                return {
+                                    id: row['ID'] || Date.now().toString() + Math.floor(Math.random() * 1000),
+                                    roomType: roomType,
+                                    roomNumber: row['Numri i Dhomës'],
+                                    clientName: row['Emri i Klientit'],
+                                    checkIn: row['Check-in'],
+                                    checkOut: row['Check-out'],
+                                    status: reverseTranslateStatus(row['Statusi']),
+                                    comments: row['Komente'] || '',
+                                    createdAt: now,
+                                    updatedAt: now
+                                };
+                            });
+                            
+                            // Kontrollo për vlera të pavlefshme
+                            const validBookings = importedBookings.filter(booking => {
+                                return booking.roomType && booking.roomNumber && booking.clientName && 
+                                      booking.checkIn && booking.checkOut && booking.status &&
+                                      roomData[booking.roomType].includes(booking.roomNumber);
+                            });
+                            
+                            if (validBookings.length > 0) {
+                                // Fshi të gjitha rezervimet ekzistuese
+                                if (db) {
+                                    db.run("DELETE FROM bookings");
+                                }
+                                
+                                // Shto rezervimet e reja
+                                validBookings.forEach(booking => {
+                                    saveBookingToDatabase(booking);
+                                });
+                                
+                                // Rifresko të dhënat
+                                loadBookingsFromDatabase();
+                                
+                                showSaveNotification(`U importuan me sukses ${validBookings.length} rezervime.`);
+                                updateDbStatus("Të dhënat u importuan me sukses nga Excel");
+                            } else {
+                                alert('Nuk u gjetën të dhëna të vlefshme për import.');
+                                updateDbStatus("Nuk u gjetën të dhëna të vlefshme", true);
+                            }
+                        } else {
+                            alert('File-i nuk përmban të dhëna.');
+                            updateDbStatus("File-i nuk përmban të dhëna", true);
+                        }
+                    } catch (error) {
+                        console.error('Error importing Excel file:', error);
+                        alert('Ndodhi një gabim gjatë importimit të file-it Excel.');
+                        updateDbStatus("Gabim gjatë importimit të Excel", true);
+                    }
+                };
+                
+                reader.readAsArrayBuffer(file);
+            } catch (error) {
+                console.error('Gabim gjatë importimit:', error);
+                alert('Ndodhi një gabim gjatë importimit të file-it.');
+                updateDbStatus("Gabim gjatë importimit", true);
+            }
+        }
+
+        // Funksion për të përditësuar përzgjedhësin e numrit të dhomës bazuar në llojin e dhomës
+        roomTypeSelect.addEventListener('change', updateRoomNumbers);
+
+        function updateRoomNumbers() {
+            const roomType = roomTypeSelect.value;
+            roomNumberSelect.innerHTML = '<option value="">Zgjidhni numrin e dhomës</option>';
+            
+            if (roomType) {
+                roomData[roomType].forEach(room => {
+                    const option = document.createElement('option');
+                    option.value = room;
+                    option.textContent = room;
+                    roomNumberSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Funksioni për të shfaqur kalendarin për muajin aktual
+        function renderCalendar() {
+            // Përditëso emrin e muajit të shfaqur
+            const monthNames = ['Janar', 'Shkurt', 'Mars', 'Prill', 'Maj', 'Qershor', 'Korrik', 'Gusht', 'Shtator', 'Tetor', 'Nëntor', 'Dhjetor'];
+            currentMonthElement.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            
+            // Krijo rreshtin e datave të kokës
+            headerRow.innerHTML = '<th>Lloji i Dhomës</th>';
+            
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const th = document.createElement('th');
+                th.textContent = day;
+                headerRow.appendChild(th);
+            }
+            
+            // Krijo rreshtat e dhomave
+            const tbody = bookingTable.querySelector('tbody');
+            tbody.innerHTML = '';
+            
+            // Shto rreshtat për dhomat dopio
+            for (let i = 0; i < roomData.dopio.length; i++) {
+                const tr = document.createElement('tr');
+                const roomName = roomData.dopio[i];
+                
+                const tdName = document.createElement('td');
+                tdName.textContent = `Dopio ${roomName}`;
+                tdName.className = 'room-type dopio';
+                tr.appendChild(tdName);
+                
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const td = document.createElement('td');
+                    td.className = 'cell available';
+                    td.dataset.date = formatDate(new Date(currentYear, currentMonth, day));
+                    td.dataset.room = roomName;
+                    td.dataset.roomType = 'dopio';
+                    tr.appendChild(td);
+                }
+                
+                tbody.appendChild(tr);
+            }
+            
+            // Shto rreshtat për dhomat tre persona
+            for (let i = 0; i < roomData.triple.length; i++) {
+                const tr = document.createElement('tr');
+                const roomName = roomData.triple[i];
+                
+                const tdName = document.createElement('td');
+                tdName.textContent = `Tre Persona ${roomName}`;
+                tdName.className = 'room-type triple';
+                tr.appendChild(tdName);
+                
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const td = document.createElement('td');
+                    td.className = 'cell available';
+                    td.dataset.date = formatDate(new Date(currentYear, currentMonth, day));
+                    td.dataset.room = roomName;
+                    td.dataset.roomType = 'triple';
+                    tr.appendChild(td);
+                }
+                
+                tbody.appendChild(tr);
+            }
+            
+            // Shto rreshtat për suitet
+            for (let i = 0; i < roomData.suite.length; i++) {
+                const tr = document.createElement('tr');
+                const roomName = roomData.suite[i];
+                
+                const tdName = document.createElement('td');
+                tdName.textContent = `Suite ${roomName}`;
+                tdName.className = 'room-type suite';
+                tr.appendChild(tdName);
+                
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const td = document.createElement('td');
+                    td.className = 'cell available';
+                    td.dataset.date = formatDate(new Date(currentYear, currentMonth, day));
+                    td.dataset.room = roomName;
+                    td.dataset.roomType = 'suite';
+                    tr.appendChild(td);
+                }
+                
+                tbody.appendChild(tr);
+            }
+            
+            // Shto event listeners për qelizat
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.addEventListener('click', function() {
+                    if (this.classList.contains('booked') || this.classList.contains('pending')) {
+                        showBookingDetails(this);
+                    } else {
+                        showAddBookingModal(this);
+                    }
+                });
+            });
+            
+            // Apliko rezervimet në kalendar
+            applyBookingsToCalendar();
+        }
+
+        // Funksion për të zbatuar rezervimet në kalendar
+        function applyBookingsToCalendar() {
+            // Rivendos të gjitha qelizat në gjendje të disponueshme
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.className = 'cell available';
+                cell.textContent = '';
+            });
+            
+            // Apliko secili rezervim
+            bookings.forEach(booking => {
+                const checkIn = new Date(booking.checkIn);
+                const checkOut = new Date(booking.checkOut);
+                
+                // Kontrollo nëse rezervimi është në muajin e shfaqur
+                if (checkIn.getMonth() === currentMonth && checkIn.getFullYear() === currentYear ||
+                    checkOut.getMonth() === currentMonth && checkOut.getFullYear() === currentYear ||
+                    (checkIn < new Date(currentYear, currentMonth, 1) && checkOut > new Date(currentYear, currentMonth + 1, 0))) {
+                    
+                    // Gjej ditët e qëndrimit në muajin aktual
+                    const startDay = checkIn.getMonth() === currentMonth && checkIn.getFullYear() === currentYear ? 
+                                     checkIn.getDate() : 1;
+                    
+                    const endDay = checkOut.getMonth() === currentMonth && checkOut.getFullYear() === currentYear ? 
+                                   checkOut.getDate() : new Date(currentYear, currentMonth + 1, 0).getDate();
+                    
+                    for (let day = startDay; day <= endDay; day++) {
+                        const date = formatDate(new Date(currentYear, currentMonth, day));
+                        const cell = document.querySelector(`.cell[data-date="${date}"][data-room="${booking.roomNumber}"][data-room-type="${booking.roomType}"]`);
+                        
+                        if (cell) {
+                            cell.className = `cell ${booking.status}`;
+                            cell.textContent = booking.clientName.split(' ')[0]; // Shfaq vetëm emrin e parë
+                            cell.dataset.bookingId = booking.id;
+                        }
+                    }
+                }
+            });
+        }
+
+        // Funksion për të formatuar një datë në formatin YYYY-MM-DD
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Funksion për të shfaqur modalin e shtimit të rezervimit
+        function showAddBookingModal(cell) {
+            modalTitle.textContent = 'Shto Rezervim të Ri';
+            bookingForm.reset();
+            
+            // Vendos vlerat fillestare bazuar në qelizën e klikuar
+            roomTypeSelect.value = cell.dataset.roomType;
+            updateRoomNumbers();
+            roomNumberSelect.value = cell.dataset.room;
+            checkInInput.value = cell.dataset.date;
+            
+            // Vendos datën e daljes paraprakisht një ditë pas
+            const checkInDate = new Date(cell.dataset.date);
+            checkInDate.setDate(checkInDate.getDate() + 1);
+            checkOutInput.value = formatDate(checkInDate);
+            
+            currentBooking = null;
+            bookingModal.style.display = 'block';
+        }
+
+        // Funksion për të shfaqur detajet e rezervimit
+        function showBookingDetails(cell) {
+            const bookingId = cell.dataset.bookingId;
+            currentBooking = bookings.find(b => b.id === bookingId);
+            
+            if (currentBooking) {
+                const createdDate = currentBooking.createdAt ? new Date(currentBooking.createdAt).toLocaleString('sq-AL') : 'E panjohur';
+                const updatedDate = currentBooking.updatedAt ? new Date(currentBooking.updatedAt).toLocaleString('sq-AL') : 'E panjohur';
+                
+                const details = `
+                    <p><strong>Lloji i Dhomës:</strong> ${translateRoomType(currentBooking.roomType)}</p>
+                    <p><strong>Numri i Dhomës:</strong> ${currentBooking.roomNumber}</p>
+                    <p><strong>Emri i Klientit:</strong> ${currentBooking.clientName}</p>
+                    <p><strong>Check-in:</strong> ${formatDateForDisplay(currentBooking.checkIn)}</p>
+                    <p><strong>Check-out:</strong> ${formatDateForDisplay(currentBooking.checkOut)}</p>
+                    <p><strong>Statusi:</strong> ${translateStatus(currentBooking.status)}</p>
+                    <p><strong>Komente:</strong> ${currentBooking.comments || 'Asnjë'}</p>
+                    <p><strong>Krijuar më:</strong> ${createdDate}</p>
+                    <p><strong>Përditësuar më:</strong> ${updatedDate}</p>
+                `;
+                
+                bookingDetailsContent.innerHTML = details;
+                bookingDetailsModal.style.display = 'block';
+            }
+        }
+
+        // Funksion për të shfaqur modalin e ndryshimit të rezervimit
+        function showEditBookingModal() {
+            if (currentBooking) {
+                modalTitle.textContent = 'Ndrysho Rezervimin';
+                
+                roomTypeSelect.value = currentBooking.roomType;
+                updateRoomNumbers();
+                roomNumberSelect.value = currentBooking.roomNumber;
+                clientNameInput.value = currentBooking.clientName;
+                checkInInput.value = currentBooking.checkIn;
+                checkOutInput.value = currentBooking.checkOut;
+                statusSelect.value = currentBooking.status;
+                commentsInput.value = currentBooking.comments || '';
+                
+                bookingDetailsModal.style.display = 'none';
+                bookingModal.style.display = 'block';
+            }
+        }
+
+        // Funksion për të fshirë një rezervim
+        function deleteBooking() {
+            if (currentBooking && confirm('A jeni të sigurt që dëshironi të fshini këtë rezervim?')) {
+                if (deleteBookingFromDatabase(currentBooking.id)) {
+                    bookings = bookings.filter(b => b.id !== currentBooking.id);
+                    updateBookingCount(bookings.length);
+                    applyBookingsToCalendar();
+                    bookingDetailsModal.style.display = 'none';
+                    showSaveNotification('Rezervimi u fshi me sukses!');
+                } else {
+                    alert('Ndodhi një gabim gjatë fshirjes së rezervimit.');
+                }
+            }
+        }
+
+        // Funksion për të ruajtur një rezervim të ri ose të ndryshuar
+        function saveBooking(e) {
+            e.preventDefault();
+            
+            const roomType = roomTypeSelect.value;
+            const roomNumber = roomNumberSelect.value;
+            const clientName = clientNameInput.value;
+            const checkIn = checkInInput.value;
+            const checkOut = checkOutInput.value;
+            const status = statusSelect.value;
+            const comments = commentsInput.value;
+            
+            if (!roomType || !roomNumber || !clientName || !checkIn || !checkOut) {
+                alert('Ju lutemi plotësoni të gjitha fushat e kërkuara');
+                return;
+            }
+            
+            if (new Date(checkOut) <= new Date(checkIn)) {
+                alert('Data e check-out duhet të jetë pas datës së check-in');
+                return;
+            }
+            
+            // Kontrollo nëse dhoma është e disponueshme për datat e zgjedhura
+            if (!isRoomAvailable(roomType, roomNumber, checkIn, checkOut, currentBooking?.id)) {
+                alert('Dhoma është e rezervuar për periudhën e zgjedhur');
+                return;
+            }
+            
+            let newBooking;
+            
+            if (currentBooking) {
+                // Ndrysho rezervimin ekzistues
+                Object.assign(currentBooking, {
+                    roomType,
+                    roomNumber,
+                    clientName,
+                    checkIn,
+                    checkOut,
+                    status,
+                    comments
+                });
+                
+                newBooking = currentBooking;
+            } else {
+                // Krijo një rezervim të ri
+                newBooking = {
+                    id: Date.now().toString(),
+                    roomType,
+                    roomNumber,
+                    clientName,
+                    checkIn,
+                    checkOut,
+                    status,
+                    comments
+                };
+                
+                bookings.push(newBooking);
+            }
+            
+            // Ruaj në bazën e të dhënave
+            if (saveBookingToDatabase(newBooking)) {
+                updateBookingCount(bookings.length);
+                applyBookingsToCalendar();
+                bookingModal.style.display = 'none';
+                showSaveNotification('Rezervimi u ruajt me sukses!');
+            } else {
+                alert('Ndodhi një gabim gjatë ruajtjes së rezervimit.');
+            }
+        }
+
+        // Funksion për të kontrolluar nëse dhoma është e disponueshme
+        function isRoomAvailable(roomType, roomNumber, checkIn, checkOut, excludeBookingId = null) {
+            const start = new Date(checkIn);
+            const end = new Date(checkOut);
+            
+            return !bookings.some(booking => {
+                if (excludeBookingId && booking.id === excludeBookingId) {
+                    return false;
+                }
+                
+                if (booking.roomType !== roomType || booking.roomNumber !== roomNumber) {
+                    return false;
+                }
+                
+                const bookingStart = new Date(booking.checkIn);
+                const bookingEnd = new Date(booking.checkOut);
+                
+                return (start < bookingEnd && end > bookingStart);
+            });
+        }
+
+        // Funksione ndihmëse për përkthim
+        function translateRoomType(type) {
+            const translations = {
+                'dopio': 'Dhomë Dopio',
+                'triple': 'Dhomë Tre Persona',
+                'suite': 'Suite'
+            };
+            return translations[type] || type;
+        }
+
+        function translateStatus(status) {
+            const translations = {
+                'booked': 'E Rezervuar',
+                'pending': 'Në Pritje',
+                'available': 'E Disponueshme'
+            };
+            return translations[status] || status;
+        }
+
+        function formatDateForDisplay(dateString) {
+            const date = new Date(dateString);
+            return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+        }
+
+        function reverseTranslateRoomType(translatedType) {
+            if (translatedType && typeof translatedType === 'string') {
+                if (translatedType.includes('Dopio')) return 'dopio';
+                if (translatedType.includes('Tre Persona')) return 'triple';
+                if (translatedType.includes('Suite')) return 'suite';
+            }
+            return 'dopio'; // Default
+        }
+
+        function reverseTranslateStatus(translatedStatus) {
+            if (translatedStatus && typeof translatedStatus === 'string') {
+                if (translatedStatus.includes('Rezervuar')) return 'booked';
+                if (translatedStatus.includes('Pritje')) return 'pending';
+                if (translatedStatus.includes('Disponueshme')) return 'available';
+            }
+            return 'booked'; // Default
+        }
+
+        // Ngjarjet (Event listeners)
+        prevMonthButton.addEventListener('click', function() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar();
+        });
+
+        nextMonthButton.addEventListener('click', function() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar();
+        });
+
+        addBookingButton.addEventListener('click', function() {
+            modalTitle.textContent = 'Shto Rezervim të Ri';
+            bookingForm.reset();
+            currentBooking = null;
+            bookingModal.style.display = 'block';
+        });
+
+        refreshCalendarButton.addEventListener('click', function() {
+            loadBookingsFromDatabase();
+            renderCalendar();
+            showSaveNotification('Kalendari u rifreskua!');
+        });
+
+        exportDbButton.addEventListener('click', exportDatabase);
+
+        exportExcelButton.addEventListener('click', exportToExcel);
+
+        importButton.addEventListener('click', function() {
+            if (importFile.files.length === 0) {
+                alert('Ju lutemi zgjidhni një file për të importuar.');
+                return;
+            }
+            
+            const file = importFile.files[0];
+            const fileName = file.name.toLowerCase();
+            
+            if (fileName.endsWith('.db') || fileName.endsWith('.sqlite') || fileName.endsWith('.sqlite3')) {
+                importDatabase(file);
+            } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls') || fileName.endsWith('.csv')) {
+                importFromExcel(file);
+            } else {
+                alert('Formati i file-it nuk është i suportuar. Ju lutemi përdorni .db, .sqlite, .xlsx, .xls ose .csv.');
+            }
+        });
+
+        bookingForm.addEventListener('submit', saveBooking);
+
+        cancelBookingButton.addEventListener('click', function() {
+            bookingModal.style.display = 'none';
+        });
+
+        closeDetailsButton.addEventListener('click', function() {
+            bookingDetailsModal.style.display = 'none';
+        });
+
+        editBookingButton.addEventListener('click', showEditBookingModal);
+
+        deleteBookingButton.addEventListener('click', deleteBooking);
+
+        // Mbyll modalet kur klikohet jashtë tyre
+        window.addEventListener('click', function(event) {
+            if (event.target === bookingModal) {
+                bookingModal.style.display = 'none';
+            }
+            if (event.target === bookingDetailsModal) {
+                bookingDetailsModal.style.display = 'none';
+            }
+        });
+
+        // Inicializo bazën e të dhënave dhe shfaq kalendarin
+        initializeDatabase().then(() => {
+            renderCalendar();
+        });
+    </script>
+</body>
+</html>
