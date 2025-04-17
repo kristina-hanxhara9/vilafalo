@@ -127,7 +127,7 @@
         }
 
         th, td {
-            padding: 12px 15px;
+            padding: 10px 8px;
             text-align: center;
             border: 1px solid #ddd;
         }
@@ -138,6 +138,47 @@
             position: sticky;
             top: 0;
             z-index: 10;
+        }
+
+        th.weekend {
+            background-color: #34495e;
+        }
+
+        .date-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .weekday {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        .day-number {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .availability {
+            font-size: 10px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-top: 2px;
+        }
+
+        .good-availability {
+            color: #d4f1dd;
+        }
+
+        .low-availability {
+            color: #fff9c4;
+        }
+
+        .no-availability {
+            color: #ffccd5;
         }
 
         .room-type {
@@ -489,11 +530,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
     <script>
-        // Të dhënat e dhomave
+        // Të dhënat e dhomave me numrat e saktë
         const roomData = {
-            'dopio': Array.from({length: 5}, (_, i) => `D${i+1}`),
-            'triple': Array.from({length: 5}, (_, i) => `T${i+1}`),
-            'suite': Array.from({length: 3}, (_, i) => `S${i+1}`)
+            'dopio': ['1', '4', '5', '10', '11'],
+            'triple': ['2', '3', '8', '9'],
+            'suite': ['6', '7', '12']
         };
 
         // Variablat e përgjithshme
@@ -992,6 +1033,7 @@
         function renderCalendar() {
             // Përditëso emrin e muajit të shfaqur
             const monthNames = ['Janar', 'Shkurt', 'Mars', 'Prill', 'Maj', 'Qershor', 'Korrik', 'Gusht', 'Shtator', 'Tetor', 'Nëntor', 'Dhjetor'];
+            const weekDayNames = ['Hën', 'Mar', 'Mër', 'Enj', 'Pre', 'Sht', 'Dje'];
             currentMonthElement.textContent = `${monthNames[currentMonth]} ${currentYear}`;
             
             // Krijo rreshtin e datave të kokës
@@ -999,9 +1041,35 @@
             
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
             
+            // Shto kolona për çdo datë
             for (let day = 1; day <= daysInMonth; day++) {
                 const th = document.createElement('th');
-                th.textContent = day;
+                
+                // Llogarit ditën e javës (0=E diel, 1=E hënë, ..., 6=E shtunë)
+                const date = new Date(currentYear, currentMonth, day);
+                const dayOfWeek = date.getDay();
+                
+                // Konverto në indeksin tonë (0=E hënë, ..., 6=E diel)
+                const weekDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                const weekDay = weekDayNames[weekDayIndex];
+                
+                // Krijo përmbajtjen e qelizës me ditën e javës, numrin e datës
+                // dhe informacion mbi disponueshmërinë (do të përditësohet më vonë)
+                th.innerHTML = `
+                    <div class="date-header">
+                        <div class="weekday">${weekDay}</div>
+                        <div class="day-number">${day}</div>
+                        <div class="availability" data-date="${formatDate(date)}">
+                            <span class="available-count">0</span>/<span class="total-count">${roomData.dopio.length + roomData.triple.length + roomData.suite.length}</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Shto ngjyra për fundjavë
+                if (weekDayIndex === 5 || weekDayIndex === 6) {
+                    th.classList.add('weekend');
+                }
+                
                 headerRow.appendChild(th);
             }
             
@@ -1012,10 +1080,10 @@
             // Shto rreshtat për dhomat dopio
             for (let i = 0; i < roomData.dopio.length; i++) {
                 const tr = document.createElement('tr');
-                const roomName = roomData.dopio[i];
+                const roomNumber = roomData.dopio[i];
                 
                 const tdName = document.createElement('td');
-                tdName.textContent = `Dopio ${roomName}`;
+                tdName.textContent = `Dhomë Dopio ${roomNumber}`;
                 tdName.className = 'room-type dopio';
                 tr.appendChild(tdName);
                 
@@ -1023,7 +1091,7 @@
                     const td = document.createElement('td');
                     td.className = 'cell available';
                     td.dataset.date = formatDate(new Date(currentYear, currentMonth, day));
-                    td.dataset.room = roomName;
+                    td.dataset.room = roomNumber;
                     td.dataset.roomType = 'dopio';
                     tr.appendChild(td);
                 }
@@ -1034,10 +1102,10 @@
             // Shto rreshtat për dhomat tre persona
             for (let i = 0; i < roomData.triple.length; i++) {
                 const tr = document.createElement('tr');
-                const roomName = roomData.triple[i];
+                const roomNumber = roomData.triple[i];
                 
                 const tdName = document.createElement('td');
-                tdName.textContent = `Tre Persona ${roomName}`;
+                tdName.textContent = `Dhomë Tre Persona ${roomNumber}`;
                 tdName.className = 'room-type triple';
                 tr.appendChild(tdName);
                 
@@ -1045,7 +1113,7 @@
                     const td = document.createElement('td');
                     td.className = 'cell available';
                     td.dataset.date = formatDate(new Date(currentYear, currentMonth, day));
-                    td.dataset.room = roomName;
+                    td.dataset.room = roomNumber;
                     td.dataset.roomType = 'triple';
                     tr.appendChild(td);
                 }
@@ -1056,10 +1124,10 @@
             // Shto rreshtat për suitet
             for (let i = 0; i < roomData.suite.length; i++) {
                 const tr = document.createElement('tr');
-                const roomName = roomData.suite[i];
+                const roomNumber = roomData.suite[i];
                 
                 const tdName = document.createElement('td');
-                tdName.textContent = `Suite ${roomName}`;
+                tdName.textContent = `Suite ${roomNumber}`;
                 tdName.className = 'room-type suite';
                 tr.appendChild(tdName);
                 
@@ -1067,7 +1135,7 @@
                     const td = document.createElement('td');
                     td.className = 'cell available';
                     td.dataset.date = formatDate(new Date(currentYear, currentMonth, day));
-                    td.dataset.room = roomName;
+                    td.dataset.room = roomNumber;
                     td.dataset.roomType = 'suite';
                     tr.appendChild(td);
                 }
@@ -1098,6 +1166,16 @@
                 cell.textContent = '';
             });
             
+            // Reseto numërimin e disponueshmërisë
+            const totalRooms = roomData.dopio.length + roomData.triple.length + roomData.suite.length;
+            document.querySelectorAll('.availability').forEach(el => {
+                el.querySelector('.available-count').textContent = totalRooms;
+                el.querySelector('.total-count').textContent = totalRooms;
+            });
+            
+            // Krijojmë një objekt për të mbajtur numërimin e dhomave të zëna për çdo datë
+            const occupiedRoomCount = {};
+            
             // Apliko secili rezervim
             bookings.forEach(booking => {
                 const checkIn = new Date(booking.checkIn);
@@ -1123,10 +1201,34 @@
                             cell.className = `cell ${booking.status}`;
                             cell.textContent = booking.clientName.split(' ')[0]; // Shfaq vetëm emrin e parë
                             cell.dataset.bookingId = booking.id;
+                            
+                            // Përditëso numërimin e dhomave të zëna
+                            if (!occupiedRoomCount[date]) {
+                                occupiedRoomCount[date] = 0;
+                            }
+                            occupiedRoomCount[date]++;
                         }
                     }
                 }
             });
+            
+            // Përditëso numërimin e disponueshmërisë për çdo datë
+            for (const date in occupiedRoomCount) {
+                const availabilityEl = document.querySelector(`.availability[data-date="${date}"]`);
+                if (availabilityEl) {
+                    const availableCount = totalRooms - occupiedRoomCount[date];
+                    availabilityEl.querySelector('.available-count').textContent = availableCount;
+                    
+                    // Ndrysho ngjyrën bazuar në disponueshmërinë
+                    if (availableCount === 0) {
+                        availabilityEl.classList.add('no-availability');
+                    } else if (availableCount <= 3) {
+                        availabilityEl.classList.add('low-availability');
+                    } else {
+                        availabilityEl.classList.add('good-availability');
+                    }
+                }
+            }
         }
 
         // Funksion për të formatuar një datë në formatin YYYY-MM-DD
